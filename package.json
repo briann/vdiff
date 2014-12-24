@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "DEBUG=vdiff node ./start.js"
+    "start": "echo \"Run 'gulp develop' instead to do development.\""
   },
   "dependencies": {
     "body-parser": "~1.8.1",
@@ -14,6 +14,18 @@
     "less-middleware": "1.0.x",
     "morgan": "~1.3.0",
     "nconf": "^0.7.1",
+    "pg": "^4.1.1",
+    "sequelize": "^2.0.0-rc4",
+    "sequelize-cli": "^1.0.0",
     "serve-favicon": "~2.1.3"
+  },
+  "devDependencies": {
+    "gulp": "^3.8.10",
+    "gulp-jshint": "^1.9.0",
+    "gulp-mocha": "^2.0.0",
+    "gulp-nodemon": "^1.0.4",
+    "gulp-notify": "^2.1.0",
+    "gulp-util": "^3.0.1",
+    "gulp-watch": "^3.0.0"
   }
 }

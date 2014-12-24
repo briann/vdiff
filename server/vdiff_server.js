@@ -4,13 +4,14 @@ var debug = require('debug')('vdiff');
 var express = require('express');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
-var nconf = require('nconf');
 var path = require('path');
 
+var ApiRouter = require('./api/router');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
-var VdiffServer = function(staticDirectory) {
+var VdiffServer = function(port, staticDirectory) {
+  this._port = port;
   this._staticDirectory = staticDirectory;
 };
 
@@ -21,7 +22,6 @@ VdiffServer.prototype.run = function() {
   app.set('views', path.join(__dirname, 'views'));
   app.set('view engine', 'hbs');
 
-  // uncomment after placing your favicon in /public
   app.use(logger('dev'));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
@@ -32,6 +32,9 @@ VdiffServer.prototype.run = function() {
 
   app.use('/', routes);
   app.use('/users', users);
+
+  var apiRouter = new ApiRouter();
+  app.use('/api', apiRouter.getRouter());
 
   // catch 404 and forward to error handler
   app.use(function(req, res, next) {
@@ -64,7 +67,7 @@ VdiffServer.prototype.run = function() {
     });
   });
 
-  app.set('port', nconf.get('port'));
+  app.set('port', this._port);
   var server = app.listen(app.get('port'), function() {
     debug('VdiffServer started on port ' + server.address().port);
   });

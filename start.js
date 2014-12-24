@@ -3,6 +3,7 @@ var VdiffServer = require('./server/vdiff_server');
 var debug = require('debug')('vdiff');
 var nconf = require('nconf');
 var path = require('path');
+var models = require('./server/models');
 
 function configure() {
   // In order of priority, first being most important.
@@ -22,9 +23,17 @@ function configure() {
 }
 
 function start() {
-  var vdiffServer = new VdiffServer(path.join(__dirname, 'public'));
+  var staticDirectory = path.join(__dirname, 'public');
+
+  // Things to initialize:
+  // * Storage Service
+  // * Screenshot Service
+
+  var vdiffServer = new VdiffServer(
+    nconf.get('port'),
+    staticDirectory);
   vdiffServer.run();
 }
 
 configure();
-start();
+models.sequelize.sync().then(start);
