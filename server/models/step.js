@@ -8,7 +8,7 @@ module.exports = function(sequelize, DataTypes) {
     classMethods: {
       associate: function(models) {
         Step.belongsTo(models.Plan);
-        Step.hasOne(models.Agent);
+        Step.belongsTo(models.Agent);
         Step.hasMany(models.Diff);
       }
     }

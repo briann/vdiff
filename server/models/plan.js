@@ -2,7 +2,11 @@ var Sequelize = require("sequelize");
 
 module.exports = function(sequelize, DataTypes) {
   var Plan = sequelize.define('Plan', {
-    key:              { type: Sequelize.STRING, allowNull: false },
+    key: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      unique: true
+    },
     title:            { type: Sequelize.STRING, allowNull: false },
     description:      { type: Sequelize.TEXT },
     defaultTimeoutMs: { type: Sequelize.INTEGER }

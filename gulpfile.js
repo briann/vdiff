@@ -49,7 +49,28 @@ gulp.task('develop', function () {
     script: 'start.js',
     env: {
       'NODE_ENV': 'development',
-      'DEBUG': 'vdiff'
+      'DEBUG': 'vdiff',
+      'FORCE_DB_SYNC': 'false'
+    },
+    ext: 'html js'
+  })
+  .on('change', ['lint'])
+  .on('crash', function() {
+    gulp.src("gulpfile.js").pipe(notify({
+      "title": "SERVER CRASHED",
+      "message": "VdiffServer failed to start. Check the logs."
+    }));
+  });
+});
+
+
+gulp.task('develop_cleandb', function () {
+  nodemon({
+    script: 'start.js',
+    env: {
+      'NODE_ENV': 'development',
+      'DEBUG': 'vdiff',
+      'FORCE_DB_SYNC': 'true'
     },
     ext: 'html js'
   })

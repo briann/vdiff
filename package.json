@@ -6,6 +6,7 @@
     "start": "echo \"Run 'gulp develop' instead to do development.\""
   },
   "dependencies": {
+    "bluebird": "^2.4.2",
     "body-parser": "~1.8.1",
     "cookie-parser": "~1.3.3",
     "debug": "~2.0.0",
@@ -17,7 +18,8 @@
     "pg": "^4.1.1",
     "sequelize": "^2.0.0-rc4",
     "sequelize-cli": "^1.0.0",
-    "serve-favicon": "~2.1.3"
+    "serve-favicon": "~2.1.3",
+    "validator": "^3.26.0"
   },
   "devDependencies": {
     "gulp": "^3.8.10",
