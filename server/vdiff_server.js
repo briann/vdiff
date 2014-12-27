@@ -7,8 +7,8 @@ var logger = require('morgan');
 var path = require('path');
 
 var ApiRouter = require('./api/router');
-var routes = require('./routes/index');
-var users = require('./routes/users');
+// var routes = require('./routes/index');
+// var users = require('./routes/users');
 
 var VdiffServer = function(port, staticDirectory) {
   this._port = port;
@@ -30,8 +30,8 @@ VdiffServer.prototype.run = function() {
   app.use(require('less-middleware')(this._staticDirectory));
   app.use(express.static(this._staticDirectory));
 
-  app.use('/', routes);
-  app.use('/users', users);
+  // app.use('/', routes);
+  // app.use('/users', users);
 
   var apiRouter = new ApiRouter();
   app.use('/api', apiRouter.getRouter());

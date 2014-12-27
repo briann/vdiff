@@ -1,0 +1,30 @@
+<div class="plan-view plan-list">
+  <table class="table">
+    <thead>
+      <tr>
+        <td>Plan Key</td>
+        <td>Title</td>
+        <td>Description</td>
+        <td>Last Executed</td>
+        <td>Times Executed</td>
+        <td>Last Updated</td>
+        <td>Actions</td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="(planKey, plan) in plans">
+        <td>{{planKey}}</td>
+        <td>{{plan.title}}</td>
+        <td>{{plan.description}}</td>
+        <td am-time-ago="plan.lastExecution"></td>
+        <td>{{plan.executionCount}}</td>
+        <td am-time-ago="plan.updatedAt"></td>
+        <td>
+          <a class="btn btn-default btn-xs" href="#/plans/{{plan.id}}" role="button">
+            Details / Edit
+          </a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

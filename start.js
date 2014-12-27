@@ -56,7 +56,7 @@ function syncDbAnd(syncDoneCallback) {
 }
 
 function start() {
-  var staticDirectory = path.join(__dirname, 'public');
+  var staticDirectory = path.join(__dirname, 'client');
 
   // Things to initialize:
   // * Storage Service

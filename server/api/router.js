@@ -5,12 +5,16 @@ var models = require('../models');
 var validator = require('validator');
 
 
+// TODO:
+// - split this file out?
+// - do i have enough to write up a UI?
+//  UI: plans first (which also define steps), then execution submission and viewing.
+
 var PlanNotFoundError = function() {};
 PlanNotFoundError.prototype = Object.create(Error.prototype);
 
 
 var ApiRouter = function() {
-
 };
 
 
@@ -82,17 +86,17 @@ ApiRouter.prototype._handleGetExecution = function(req, res) {
   models.Execution.find({
     where: { id: id },
     include: [
-  {
-    model: models.Plan
-  },
-{
-  model: models.Diff,
-  include: [models.Step]
-}
-]
-}).then(function(execution) {
-  res.json(execution.toJSON());
-});
+      {
+        model: models.Plan
+      },
+      {
+        model: models.Diff,
+        include: [models.Step]
+      }
+    ]
+  }).then(function(execution) {
+    res.json(execution.toJSON());
+  });
 };
 
 
@@ -138,7 +142,20 @@ ApiRouter.prototype._handleNewOrUpdatedPlan = function(req, res) {
   }).then(function(plan) {
     this.plan = plan;
     return Promise.map(inputSteps, function(inputStep) {
-      return models.Step.create(inputStep);
+      return models.Step.create(inputStep).bind({
+        inputStep: inputStep
+      }).then(function(step) {
+        this.step = step;
+        return models.Agent.findOne({
+          where: {
+            key: 'DESKTOP_CHROME'
+          }
+        });
+      }).then(function(agent) {
+        return this.step.setAgent(agent);
+      }).then(function(success) {
+        return this.step;
+      });
     });
   }).then(function(steps) {
     this.steps = steps;
@@ -149,12 +166,53 @@ ApiRouter.prototype._handleNewOrUpdatedPlan = function(req, res) {
 };
 
 
+ApiRouter.prototype._handleGetPlan = function(req, res) {
+  var id = req.params.planId;
+  assert(id);
+  models.Plan.find({
+    where: { id: id },
+    include: [
+      {
+        model: models.Execution
+      },
+      {
+        model: models.Step,
+        include: [models.Agent]
+      }
+    ]
+  }).then(function(plan) {
+    res.json(plan.toJSON());
+  }).catch(function(error) {
+    res.json(null);
+  });
+};
+
+
 ApiRouter.prototype._handleListPlans = function(req, res) {
-  models.Plan.findAll().reduce(function(accumulator, item) {
-    accumulator[item.key] = item;
+  models.Plan.findAll().map(function(plan) {
+    // Get execution details for each plan (execution counts and last executed).
+    return models.Execution.count({
+      where: { PlanId: plan.id }
+    }).bind({
+      plan: plan
+    }).then(function(count) {
+      this.count = count;
+      // Search for the last exeuction.
+      return models.Execution.findOne({
+        where: { PlanId: plan.id },
+        order: [['updatedAt', 'DESC']]
+      });
+    }).then(function(lastExecution) {
+      var planJson = this.plan.toJSON();
+      planJson.executionCount = this.count;
+      planJson.lastExecution = lastExecution ? lastExecution.toJSON() : null;
+      return planJson;
+    });
+  }).reduce(function(accumulator, json) {
+    accumulator[json.key] = json;
     return accumulator;
-  }, {}).then(function(items) {
-    res.json(items);
+  }, {}).then(function(plansJsonWithCount) {
+    res.json(plansJsonWithCount);
   });
 };
 
@@ -198,6 +256,7 @@ ApiRouter.prototype.getRouter = function() {
 
   // Plans
   router.get('/plans', this._handleListPlans);
+  router.get('/plans/:planId', this._handleGetPlan);
   router.post('/plans', this._handleNewOrUpdatedPlan);
 
   // Steps
