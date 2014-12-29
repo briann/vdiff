@@ -10,8 +10,11 @@
     <dl class="dl-horizontal">
       <dt>Current status</dt>
       <dd>
-        <span class="label {{executionStatus.labelClass}}">
-          {{executionStatus.message}}
+        <span class="label label-warning" ng-if="execution.pendingDiffs > 0">
+          PENDING
+        </span>
+        <span class="label label-success" ng-if="execution.pendingDiffs == 0">
+          DONE
         </span>
       </dd>
       <dt>Created</dt>
@@ -31,9 +34,9 @@
     <hr />
 
     <div class="diffs">
-      <div>
-
-      </div>
+      <h4>
+        Diffs: {{execution.completedDiffs}} of {{execution.Diffs.length}} completed
+      </h4>
       <div class="panel panel-default" ng-repeat="diff in execution.Diffs">
         <div class="panel-heading">
           <dl class="dl-horizontal">

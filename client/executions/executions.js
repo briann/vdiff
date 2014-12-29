@@ -56,17 +56,5 @@ executionView.controller('ExecutionCtrl', function($scope, $routeParams, $locati
 
   Execution.get({ id: $routeParams.executionId }, function(data) {
     $scope.execution = data;
-
-    if (_.some(data.Diffs), function(diff) { return diff.compImageId == null }) {
-      $scope.executionStatus = {
-        labelClass: 'label-warning',
-        message: 'PENDING'
-      };
-    } else {
-      $scope.executionStatus = {
-        labelClass: 'label-success',
-        message: 'DONE'
-      };
-    }
   });
 });

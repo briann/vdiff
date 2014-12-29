@@ -128,11 +128,18 @@
       </thead>
       <tbody>
         <tr ng-repeat="execution in executions">
-          <td>status</td>
+          <td>
+            <span class="label label-warning" ng-if="execution.pendingDiffs > 0">
+              PENDING
+            </span>
+            <span class="label label-success" ng-if="execution.pendingDiffs == 0">
+              DONE
+            </span>
+          </td>
           <td>{{execution.fromKey}}</td>
           <td>{{execution.toKey}}</td>
           <td am-time-ago="execution.createdAt"></td>
-          <td>diffs</td>
+          <td>{{execution.completedDiffs}}/{{execution.Diffs.length}}</td>
           <td>
             <a class="btn btn-primary btn-xs" href="#/executions/{{execution.id}}" role="button">
               View

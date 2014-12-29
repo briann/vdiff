@@ -57,7 +57,16 @@ ExecutionsApi.prototype.getExecutionListJson = function() {
       }
     ]
   }).reduce(function(accumulator, item) {
-    accumulator.push(item);
+    var executionJson = item.toJSON();
+    var pendingDiffs = 0;
+    for (var i = 0; i < executionJson.Diffs.length; i++) {
+      if (!executionJson.Diffs[i].compImageId) {
+        pendingDiffs++;
+      }
+    }
+    executionJson.pendingDiffs = pendingDiffs;
+    executionJson.completedDiffs = executionJson.Diffs.length - pendingDiffs;
+    accumulator.push(executionJson);
     return accumulator;
   }, []);
 };
@@ -76,7 +85,16 @@ ExecutionsApi.prototype.getExecutionJson = function(id) {
       }
     ]
   }).then(function(execution) {
-    return execution.toJSON();
+    var executionJson = execution.toJSON();
+    var pendingDiffs = 0;
+    for (var i = 0; i < executionJson.Diffs.length; i++) {
+      if (!executionJson.Diffs[i].compImageId) {
+        pendingDiffs++;
+      }
+    }
+    executionJson.pendingDiffs = pendingDiffs;
+    executionJson.completedDiffs = executionJson.Diffs.length - pendingDiffs;
+    return executionJson;
   });
 };
 

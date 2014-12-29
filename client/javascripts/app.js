@@ -38,24 +38,5 @@ app.factory('Plan', function($resource) {
 
 
 app.factory('Execution', function($resource) {
-  var url = '/api/executions/:id';
-  var paramDefaults = {};
-  var actions = {
-    // 'save': {
-    //   method: 'POST',
-    //   transformRequest: function(planRequest, headersGetter) {
-    //     // copy
-    //     var plan = JSON.parse(JSON.stringify(planRequest));
-    //
-    //     if (plan.Steps) {
-    //       for (var s = 0; s < plan.Steps.length; s++) {
-    //         delete plan.Steps[s].id;
-    //       }
-    //     }
-    //
-    //     return angular.toJson(plan);
-    //   }
-    // }
-  };
-  return $resource(url, paramDefaults, actions);
+  return $resource('/api/executions/:id');
 });
