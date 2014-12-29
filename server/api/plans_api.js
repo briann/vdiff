@@ -1,6 +1,6 @@
 var Promise = require('bluebird');
 var models = require('../models');
-var error = require('./errors');
+var PlanNotFoundError = require('./plan_not_found_error');
 
 
 var PlansApi = function() {};

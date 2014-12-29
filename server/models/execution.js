@@ -4,31 +4,19 @@ module.exports = function(sequelize, DataTypes) {
   var Execution = sequelize.define('Execution', {
     fromKey: {
       type: Sequelize.STRING,
-      allowNull: false,
-      validate: {
-        isAlphanumeric: true
-      }
+      allowNull: false
     },
     fromUrl: {
       type: Sequelize.STRING,
-      allowNull: false,
-      validate: {
-        isUrl: true
-      }
+      allowNull: false
     },
     toKey: {
       type: Sequelize.STRING,
-      allowNull: false,
-      validate: {
-        isAlphanumeric: true
-      }
+      allowNull: false
     },
     toUrl: {
       type: Sequelize.STRING,
-      allowNull: false,
-      validate: {
-        isUrl: true
-      }
+      allowNull: false
     }
   }, {
     classMethods: {

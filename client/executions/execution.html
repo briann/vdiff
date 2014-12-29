@@ -1,0 +1,56 @@
+<div class="execution-view single-execution">
+
+  <div ng-if="execution == null">
+    No execution found with ID {{params.executionId}}.
+  </div>
+  <div ng-if="execution">
+
+    <h1>Viewing execution #{{execution.id}}</h1>
+
+    <dl class="dl-horizontal">
+      <dt>Current status</dt>
+      <dd>
+        <span class="label {{executionStatus.labelClass}}">
+          {{executionStatus.message}}
+        </span>
+      </dd>
+      <dt>Created</dt>
+      <dd am-time-ago="execution.createdAt"></dd>
+      <dt>From key</dt>
+      <dd>{{execution.fromKey}}</dd>
+      <dt>From URL</dt>
+      <dd>{{execution.fromUrl}}</dd>
+      <dt>To key</dt>
+      <dd>{{execution.toKey}}</dd>
+      <dt>To URL</dt>
+      <dd>{{execution.toUrl}}</dd>
+      <dt>Plan</dt>
+      <dd><a href="#/plans/{{execution.PlanId}}">{{execution.Plan.key}}</a></dd>
+    </dl>
+
+    <hr />
+
+    <div class="diffs">
+      <div>
+
+      </div>
+      <div class="panel panel-default" ng-repeat="diff in execution.Diffs">
+        <div class="panel-heading">
+          <dl class="dl-horizontal">
+            <dt>From</dt>
+            <dd>{{execution.fromUrl}}{{diff.Step.path}}</dd>
+            <dt>To</dt>
+            <dd>{{execution.toUrl}}{{diff.Step.path}}</dd>
+          </dl>
+        </div>
+        <div class="panel-body">
+          <div class="pending" ng-show="diff.compImageId == null">
+            Diff still being computed...
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

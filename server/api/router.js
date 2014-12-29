@@ -3,59 +3,44 @@ var assert = require('assert');
 var express = require('express');
 var models = require('../models');
 var validator = require('validator');
-var error = require('./errors');
+var PlanNotFoundError = require('./plan_not_found_error');
 var PlansApi = require('./plans_api');
+var ExecutionsApi = require('./executions_api');
 
 
-var ApiRouter = function(plansApi) {
+var ApiRouter = function(plansApi, executionsApi) {
   this._plansApi = plansApi;
+  this._executionsApi = executionsApi;
 };
 
 
 ApiRouter.prototype._handleNewExecution = function(req, res) {
-  var plan = req.body.plan;
+  var planId = req.body.planId;
   var fromUrl = req.body.fromUrl;
   var fromKey = req.body.fromKey;
   var toUrl = req.body.toUrl;
   var toKey = req.body.toKey;
 
-  assert(plan, 'Request should provide a diff plan.');
+  assert(planId);
   assert(validator.matches(fromKey, /^[-_a-zA-Z0-9]+$/i));
   assert(validator.matches(toKey, /^[-_a-zA-Z0-9]+$/i));
-  assert(validator.isURL(fromUrl));
-  assert(validator.isURL(toUrl));
+  var urlValidatorOptions = {
+    require_tld: false,
+    require_protocol: true,
+    allow_underscores: true
+  };
+  assert(validator.isURL(fromUrl, urlValidatorOptions));
+  assert(validator.isURL(toUrl, urlValidatorOptions));
 
   // Set up execution.
-  Promise.bind({}).then(function() {
-    return models.Plan.find(plan);
-  }).then(function(plan) {
-    if (!plan) {
-      throw new PlanNotFoundError();
-    } else {
-      this.plan = plan;
-      return models.Execution.create({
-        fromKey: fromKey,
-        fromUrl: fromUrl,
-        toKey: toKey,
-        toUrl: toUrl
-      });
-    }
-  }).then(function(execution) {
-    this.execution = execution;
-    return execution.setPlan(this.plan);
-  }).then(function(success) {
-    return this.plan.getSteps();
-  }).map(function(step) {
-    return models.Diff.create({}).bind({
-      execution: this.execution
-    }).then(function(diff) {
-      diff.setStep(step);
-      diff.setExecution(this.execution);
-      return diff;
-    });
-  }).then(function(diffs) {
-    console.log('Should send execution #' + this.execution.id + ' to be run.');
-    res.json(this.execution.toJSON());
+  this._executionsApi.createExecution(
+    fromKey,
+    fromUrl,
+    toKey,
+    toUrl,
+    planId
+  ).then(function(executionJson) {
+    res.json(executionJson);
   }).catch(PlanNotFoundError, function(error) {
     res.status(500).send();
   });
@@ -63,12 +48,7 @@ ApiRouter.prototype._handleNewExecution = function(req, res) {
 
 
 ApiRouter.prototype._handleListExecutions = function(req, res) {
-  models.Execution.findAll({
-    order: [['updatedAt', 'DESC']]
-  }).reduce(function(accumulator, item) {
-    accumulator.push(item);
-    return accumulator;
-  }, []).then(function(items) {
+  this._executionsApi.getExecutionListJson().then(function(items) {
     res.json(items);
   });
 };
@@ -77,19 +57,8 @@ ApiRouter.prototype._handleListExecutions = function(req, res) {
 ApiRouter.prototype._handleGetExecution = function(req, res) {
   var id = req.params.executionId;
   assert(id);
-  models.Execution.find({
-    where: { id: id },
-    include: [
-      {
-        model: models.Plan
-      },
-      {
-        model: models.Diff,
-        include: [models.Step]
-      }
-    ]
-  }).then(function(execution) {
-    res.json(execution.toJSON());
+  this._executionsApi.getExecutionJson(id).then(function(executionJson) {
+    res.json(executionJson);
   });
 };
 
@@ -170,27 +139,6 @@ ApiRouter.prototype._handleListAgents = function(req, res) {
     res.json(items);
   });
 };
-
-
-// ApiRouter.prototype._handleGetStepsForPlan = function(req, res) {
-//   var key = req.query.key;
-//   assert(key);
-//
-//   models.Plan.find({where: { key: key }}).then(function(plan) {
-//     if (!plan) {
-//       throw new PlanNotFoundError();
-//     } else {
-//       return plan.getSteps();
-//     }
-//   }).reduce(function(accumulator, step) {
-//     accumulator.push(step);
-//     return accumulator;
-//   }, []).then(function(steps) {
-//     res.json(steps);
-//   }).catch(PlanNotFoundError, function(error) {
-//     res.status(500).send();
-//   });
-// };
 
 
 ApiRouter.prototype.getRouter = function() {

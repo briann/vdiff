@@ -8,6 +8,7 @@ var path = require('path');
 
 var ApiRouter = require('./api/router');
 var PlansApi = require('./api/plans_api');
+var ExecutionsApi = require('./api/executions_api');
 
 var VdiffServer = function(port, staticDirectory) {
   this._port = port;
@@ -30,7 +31,8 @@ VdiffServer.prototype.run = function() {
   app.use(express.static(this._staticDirectory));
 
   var plansApi = new PlansApi();
-  var apiRouter = new ApiRouter(plansApi);
+  var executionsApi = new ExecutionsApi();
+  var apiRouter = new ApiRouter(plansApi, executionsApi);
   app.use('/api', apiRouter.getRouter());
 
   // catch 404 and forward to error handler

@@ -28,4 +28,38 @@ div.plan-view {
   }
 }
 
+div.execution-view {
+  margin: 10px 40px;
+
+  &.execution-list {
+    thead {
+      font-weight: bold;
+    }
+    .creation-form {
+      border: 1px solid #ccc;
+      padding: 20px 10px;
+      border-radius: 5px;
+    }
+  }
+
+  &.single-execution {
+    .diffs {
+      @dl-indent: 40px;
+      dl {
+        margin: 0;
+        dt {
+          width: @dl-indent;
+        }
+        dd {
+          margin-left: @dl-indent+20px;;
+        }
+      }
+      .pending {
+        font-style: italic;
+      }
+    }
+  }
+
+}
+
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }

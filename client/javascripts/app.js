@@ -10,14 +10,13 @@ var app = angular.module('vdiff', [
 ]);
 
 app.config(['$routeProvider', function($routeProvider) {
-  $routeProvider.otherwise({redirectTo: '/plans'});
+  $routeProvider.otherwise({redirectTo: '/executions'});
 }]);
 
 app.factory('Plan', function($resource) {
   var url = '/api/plans/:id';
   var paramDefaults = {};
   var actions = {
-
     'save': {
       method: 'POST',
       transformRequest: function(planRequest, headersGetter) {
@@ -33,6 +32,30 @@ app.factory('Plan', function($resource) {
         return angular.toJson(plan);
       }
     }
+  };
+  return $resource(url, paramDefaults, actions);
+});
+
+
+app.factory('Execution', function($resource) {
+  var url = '/api/executions/:id';
+  var paramDefaults = {};
+  var actions = {
+    // 'save': {
+    //   method: 'POST',
+    //   transformRequest: function(planRequest, headersGetter) {
+    //     // copy
+    //     var plan = JSON.parse(JSON.stringify(planRequest));
+    //
+    //     if (plan.Steps) {
+    //       for (var s = 0; s < plan.Steps.length; s++) {
+    //         delete plan.Steps[s].id;
+    //       }
+    //     }
+    //
+    //     return angular.toJson(plan);
+    //   }
+    // }
   };
   return $resource(url, paramDefaults, actions);
 });
