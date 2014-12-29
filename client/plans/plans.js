@@ -1,6 +1,6 @@
 'use strict';
 
-var plan = angular.module('vdiff.PlanView', ['ngRoute', 'angularMoment']);
+var plan = angular.module('vdiff.PlanView', ['ngRoute', 'angularMoment', 'ui.bootstrap']);
 
 plan.config(['$routeProvider', function($routeProvider) {
   $routeProvider.when('/plans', {
@@ -13,40 +13,95 @@ plan.config(['$routeProvider', function($routeProvider) {
   });
 }]);
 
-plan.controller('PlanListCtrl', function($scope, $http) {
-  $http.get('/api/plans').then(function(response) {
-    $scope.plans = response.data;
+plan.controller('PlanListCtrl', function($scope, $http, Plan, $location) {
+  Plan.query(function(data) {
+    $scope.plans = data;
   });
+
+  $scope.createPlan = function() {
+    // Plan.
+    var plan = new Plan({
+      key: 'RENAME_ME_' + Math.floor((new Date().getTime() / 1000)),
+      defaultTimeoutMs: 10000,
+      Steps: []
+    });
+    plan.$save(function(savedPlan) {
+      $scope.plans.push(savedPlan);
+      $location.path('/plans/' + savedPlan.id);
+    });
+  };
+
+  $scope.deletePlan = function(planId, index) {
+    // console.log(planId);
+    Plan.delete({ id: planId });
+    $scope.plans.splice(index, 1);
+  };
 });
 
-plan.controller('PlanCtrl', function($scope, $http, $routeParams, $location) {
+plan.controller('PlanCtrl', function($scope, $http, $routeParams, $location, Plan) {
   if ($routeParams.planId == null) {
-    $location.path('/');
+    $location.path('/plans');
   }
+
   $scope.params = $routeParams;
-  $http.get('/api/plans/' + $routeParams.planId).then(function(response) {
-    $scope.plan = response.data;
+  $scope.alerts = [];
+
+  Plan.get({ id: $routeParams.planId }, function(data) {
+    $scope.plan = data;
   });
-});
 
+  $scope.isLegalKey = function(key) {
+    return false;
+  };
 
-plan.controller('PlanFormCtrl', function($scope, $http) {
-  // pull this out.
-  this.submit = function(isValid, plan) {
+  $scope.addAlert = function(type, message) {
+    $scope.alerts.push({type: type, msg: message, time: new Date()});
+  };
+
+  $scope.addSuccessAlert = function(message) {
+    $scope.addAlert('success', message);
+  };
+
+  $scope.addDangerAlert = function(message) {
+    $scope.addAlert('danger', message);
+  };
+
+  $scope.closeAlert = function(index) {
+    $scope.alerts.splice(index, 1);
+  };
+
+  $scope.clearAlerts = function() {
+    $scope.alerts = [];
+  };
+
+  $scope.submit = function(isValid, plan) {
     if (!isValid) {
-      console.log('INVALID');
+      $scope.clearAlerts();
+      $scope.addDangerAlert('Invalid plan input fields.');
       return;
     }
 
-// todos
-    // use ngResource?
-    // maybe rename some things in the plan/:id response to be lower case?
-    // maybe don't do eager loading in plan/:id call?
-
-    console.log(plan);
+    window.scrollTo(0,0);
+    plan.$save(function(){
+      $scope.clearAlerts();
+      $scope.addSuccessAlert('Successfully updated plan!');
+    }, function() {
+      $scope.clearAlerts();
+      $scope.addDangerAlert('Something bad happened while updating the plan.');
+    });
   };
 
   $scope.addStep = function() {
-    // console.log(plan);
+    $scope.plan.Steps.push({
+      'path': '',
+      'timeoutMs': null,
+      'Agent': {
+        'key': 'default'
+      }
+    });
+  };
+
+  $scope.removeStep = function(index) {
+    $scope.plan.Steps.splice(index, 1);
   };
 });

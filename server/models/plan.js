@@ -7,9 +7,8 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false,
       unique: true
     },
-    title:            { type: Sequelize.STRING, allowNull: false },
     description:      { type: Sequelize.TEXT },
-    defaultTimeoutMs: { type: Sequelize.INTEGER }
+    defaultTimeoutMs: { type: Sequelize.INTEGER, allowNull: false }
   }, {
     classMethods: {
       associate: function(models) {

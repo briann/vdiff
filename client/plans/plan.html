@@ -1,24 +1,32 @@
 <div class="plan-view single-plan">
+
+  <div>
+    <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">
+      {{alert.msg}} (<span class="alert-time" am-time-ago="{{alert.time}}"></span>)
+    </alert>
+  </div>
+
   <div ng-if="plan == null">
     No plan found with ID {{params.planId}}.
   </div>
   <div ng-if="plan">
     <h1>Plan #{{plan.id}}: {{plan.key}}</h1>
 
-    <form ng-controller="PlanFormCtrl as form"
-          name="planForm"
-          ng-submit="form.submit(planForm.$valid, plan)"
+    <form name="planForm"
+          ng-submit="submit(planForm.$valid, plan)"
           class="form-horizontal">
 
       <hr />
 
       <div class="form-group">
-        <label for="title" class="col-sm-2 control-label">Title</label>
+        <label for="key" class="col-sm-2 control-label">Key</label>
         <div class="col-sm-3">
           <input class="form-control"
                  type="text"
-                 name="title"
-                 ng-model="plan.title"
+                 name="key"
+                 ng-model="plan.key"
+                 pattern="^[-_a-zA-Z0-9]+$"
+                 placeholder="Alphanumeric, _, and - only."
                  required />
         </div>
       </div>
@@ -53,8 +61,18 @@
         <div class="col-sm-6">
 
           <div class="panel panel-default step" ng-repeat="step in plan.Steps">
-            <div class="panel-heading" ng-if="step.id">Step (UID {{step.id}})</div>
-            <div class="panel-heading" ng-if="!step.id">New Step</div>
+            <div class="panel-heading" ng-if="step.id">
+              Step
+              <button type="button" style="float:right"
+                      class="btn btn-default btn-xs"
+                      ng-click="removeStep($index)">
+                <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                Delete
+              </button>
+            </div>
+            <div class="panel-heading" ng-if="!step.id">
+              New Step
+            </div>
             <div class="panel-body">
 
               <div class="form-group col-sm-12">

@@ -3,18 +3,12 @@ var assert = require('assert');
 var express = require('express');
 var models = require('../models');
 var validator = require('validator');
+var error = require('./errors');
+var PlansApi = require('./plans_api');
 
 
-// TODO:
-// - split this file out?
-// - do i have enough to write up a UI?
-//  UI: plans first (which also define steps), then execution submission and viewing.
-
-var PlanNotFoundError = function() {};
-PlanNotFoundError.prototype = Object.create(Error.prototype);
-
-
-var ApiRouter = function() {
+var ApiRouter = function(plansApi) {
+  this._plansApi = plansApi;
 };
 
 
@@ -26,10 +20,10 @@ ApiRouter.prototype._handleNewExecution = function(req, res) {
   var toKey = req.body.toKey;
 
   assert(plan, 'Request should provide a diff plan.');
-  validator.isAlphanumeric(fromKey);
-  validator.isAlphanumeric(toKey);
-  validator.isURL(fromUrl);
-  validator.isURL(toUrl);
+  assert(validator.matches(fromKey, /^[-_a-zA-Z0-9]+$/i));
+  assert(validator.matches(toKey, /^[-_a-zA-Z0-9]+$/i));
+  assert(validator.isURL(fromUrl));
+  assert(validator.isURL(toUrl));
 
   // Set up execution.
   Promise.bind({}).then(function() {
@@ -100,68 +94,51 @@ ApiRouter.prototype._handleGetExecution = function(req, res) {
 };
 
 
+ApiRouter.prototype._handleDeletePlan = function(req, res) {
+  var id = req.params.planId;
+  assert(id);
+  this._plansApi.deletePlan(id).then(function() {
+    res.json(true);
+  }).catch(function(error) {
+    res.json(false);
+  });
+};
+
+
 ApiRouter.prototype._handleNewOrUpdatedPlan = function(req, res) {
+  var id = req.body.id;
   var key = req.body.key;
-  var title = req.body.title;
   var description = req.body.description;
   var defaultTimeoutMs = req.body.defaultTimeoutMs;
-  var inputSteps = req.body.steps;
+  var inputSteps = req.body.Steps;
 
-  assert(key);
-  assert(title);
+  assert(key || id);
   assert(defaultTimeoutMs > 0);
   assert(inputSteps);
+  assert(validator.matches(key, /^[-_a-zA-Z0-9]+$/));
 
   var steps = [];
   for (var i = 0; i < inputSteps.length; i++) {
     var inputStep = inputSteps[i];
     assert(inputStep.path);
+    // Should assert an agent once we start accepting agents.
     var step = { path: inputStep.path };
-    // use a library function here
     if (inputStep.timeoutMs) {
       step.timeoutMs = inputStep.timeoutMs;
     }
     steps.push(step);
   }
 
-  var planAttributes = {
-    key: key,
-    title: title,
-    description: description || '',
-    defaultTimeoutMs: defaultTimeoutMs
-  };
-
-  models.Plan.findOne({
-    where: { key: key }
-  }).bind({}).then(function(plan) {
-    if (!!plan) {
-      return plan.updateAttributes(planAttributes);
-    } else {
-      return models.Plan.create(planAttributes);
-    }
-  }).then(function(plan) {
-    this.plan = plan;
-    return Promise.map(inputSteps, function(inputStep) {
-      return models.Step.create(inputStep).bind({
-        inputStep: inputStep
-      }).then(function(step) {
-        this.step = step;
-        return models.Agent.findOne({
-          where: {
-            key: 'DESKTOP_CHROME'
-          }
-        });
-      }).then(function(agent) {
-        return this.step.setAgent(agent);
-      }).then(function(success) {
-        return this.step;
-      });
-    });
-  }).then(function(steps) {
-    this.steps = steps;
-    return this.plan.setSteps(this.steps);
-  }).then(function() {
-    res.json(this.plan.toJSON());
+  return this._plansApi.createOrUpdatePlan(
+    id,
+    key,
+    defaultTimeoutMs,
+    steps,
+    description
+  ).bind({ _plansApi: this._plansApi }).then(function(planId) {
+    return this._plansApi.getPlanJson(planId);
+  }).then(function(planJson) {
+    res.json(planJson);
   });
 };
 
@@ -169,50 +146,18 @@ ApiRouter.prototype._handleNewOrUpdatedPlan = function(req, res) {
 ApiRouter.prototype._handleGetPlan = function(req, res) {
   var id = req.params.planId;
   assert(id);
-  models.Plan.find({
-    where: { id: id },
-    include: [
-      {
-        model: models.Execution
-      },
-      {
-        model: models.Step,
-        include: [models.Agent]
-      }
-    ]
-  }).then(function(plan) {
-    res.json(plan.toJSON());
+  this._plansApi.getPlanJson(id).then(function(planJson) {
+    res.json(planJson);
   }).catch(function(error) {
+    console.log(error);
     res.json(null);
   });
 };
 
 
 ApiRouter.prototype._handleListPlans = function(req, res) {
-  models.Plan.findAll().map(function(plan) {
-    // Get execution details for each plan (execution counts and last executed).
-    return models.Execution.count({
-      where: { PlanId: plan.id }
-    }).bind({
-      plan: plan
-    }).then(function(count) {
-      this.count = count;
-      // Search for the last exeuction.
-      return models.Execution.findOne({
-        where: { PlanId: plan.id },
-        order: [['updatedAt', 'DESC']]
-      });
-    }).then(function(lastExecution) {
-      var planJson = this.plan.toJSON();
-      planJson.executionCount = this.count;
-      planJson.lastExecution = lastExecution ? lastExecution.toJSON() : null;
-      return planJson;
-    });
-  }).reduce(function(accumulator, json) {
-    accumulator[json.key] = json;
-    return accumulator;
-  }, {}).then(function(plansJsonWithCount) {
-    res.json(plansJsonWithCount);
+  this._plansApi.getPlanListJson().then(function(planListJson) {
+    res.json(planListJson);
   });
 };
 
@@ -227,45 +172,46 @@ ApiRouter.prototype._handleListAgents = function(req, res) {
 };
 
 
-ApiRouter.prototype._handleGetStepsForPlan = function(req, res) {
-  var key = req.query.key;
-  assert(key);
-
-  models.Plan.find({where: { key: key }}).then(function(plan) {
-    if (!plan) {
-      throw new PlanNotFoundError();
-    } else {
-      return plan.getSteps();
-    }
-  }).reduce(function(accumulator, step) {
-    accumulator.push(step);
-    return accumulator;
-  }, []).then(function(steps) {
-    res.json(steps);
-  }).catch(PlanNotFoundError, function(error) {
-    res.status(500).send();
-  });
-};
+// ApiRouter.prototype._handleGetStepsForPlan = function(req, res) {
+//   var key = req.query.key;
+//   assert(key);
+//
+//   models.Plan.find({where: { key: key }}).then(function(plan) {
+//     if (!plan) {
+//       throw new PlanNotFoundError();
+//     } else {
+//       return plan.getSteps();
+//     }
+//   }).reduce(function(accumulator, step) {
+//     accumulator.push(step);
+//     return accumulator;
+//   }, []).then(function(steps) {
+//     res.json(steps);
+//   }).catch(PlanNotFoundError, function(error) {
+//     res.status(500).send();
+//   });
+// };
 
 
 ApiRouter.prototype.getRouter = function() {
   var router = express.Router();
 
   // Agents
-  router.get('/agents', this._handleListAgents);
+  router.get('/agents', this._handleListAgents.bind(this));
 
   // Plans
-  router.get('/plans', this._handleListPlans);
-  router.get('/plans/:planId', this._handleGetPlan);
-  router.post('/plans', this._handleNewOrUpdatedPlan);
+  router.get('/plans', this._handleListPlans.bind(this));
+  router.get('/plans/:planId', this._handleGetPlan.bind(this));
+  router.post('/plans', this._handleNewOrUpdatedPlan.bind(this));
+  router.delete('/plans/:planId', this._handleDeletePlan.bind(this));
 
   // Steps
-  router.get('/steps', this._handleGetStepsForPlan);
+  // router.get('/steps', this._handleGetStepsForPlan);
 
   // Executions
-  router.post('/executions', this._handleNewExecution);
-  router.get('/executions', this._handleListExecutions);
-  router.get('/executions/:executionId', this._handleGetExecution);
+  router.post('/executions', this._handleNewExecution.bind(this));
+  router.get('/executions', this._handleListExecutions.bind(this));
+  router.get('/executions/:executionId', this._handleGetExecution.bind(this));
 
   // Diffs
 
