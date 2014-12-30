@@ -34,7 +34,7 @@ executionView.controller('ExecutionListCtrl', function($scope, Execution, Plan) 
 
     var execution = new Execution(newExecution);
     execution.$save(function(savedExecution) {
-      $scope.executions.push(savedExecution);
+      $scope.executions.unshift(savedExecution);
     });
   };
 

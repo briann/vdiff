@@ -4,6 +4,8 @@ var debug = require('debug')('vdiff');
 var nconf = require('nconf');
 var path = require('path');
 var models = require('./server/models');
+var ScreenshotServiceApi = require('./screenshot_service/api');
+var ImageDiffServiceApi = require('./imagediff_service/api');
 
 function configure() {
   // In order of priority, first being most important.
@@ -58,13 +60,14 @@ function syncDbAnd(syncDoneCallback) {
 function start() {
   var staticDirectory = path.join(__dirname, 'client');
 
-  // Things to initialize:
-  // * Storage Service
-  // * Screenshot Service
+  var screenshotService = new ScreenshotServiceApi();
+  var imageDiffService = new ImageDiffServiceApi();
 
   var vdiffServer = new VdiffServer(
     nconf.get('port'),
-    staticDirectory);
+    staticDirectory,
+    screenshotService,
+    imageDiffService);
   vdiffServer.run();
 }
 

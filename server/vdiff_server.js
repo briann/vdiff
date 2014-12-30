@@ -10,9 +10,11 @@ var ApiRouter = require('./api/router');
 var PlansApi = require('./api/plans_api');
 var ExecutionsApi = require('./api/executions_api');
 
-var VdiffServer = function(port, staticDirectory) {
+var VdiffServer = function(port, staticDirectory, screenshotService, imageDiffService) {
   this._port = port;
   this._staticDirectory = staticDirectory;
+  this._screenshotService = screenshotService;
+  this._imageDiffService = imageDiffService;
 };
 
 VdiffServer.prototype.run = function() {
@@ -31,7 +33,7 @@ VdiffServer.prototype.run = function() {
   app.use(express.static(this._staticDirectory));
 
   var plansApi = new PlansApi();
-  var executionsApi = new ExecutionsApi();
+  var executionsApi = new ExecutionsApi(this._screenshotService, this._imageDiffService);
   var apiRouter = new ApiRouter(plansApi, executionsApi);
   app.use('/api', apiRouter.getRouter());
 
