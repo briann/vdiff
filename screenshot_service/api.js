@@ -2,7 +2,8 @@ var Promise = require('bluebird');
 var uuid = require('node-uuid');
 
 
-var ScreenshotServiceApi = function() {
+var ScreenshotServiceApi = function(storageService) {
+  this._storageService = storageService;
 };
 
 
@@ -13,7 +14,7 @@ ScreenshotServiceApi.prototype.getScreenshot = function(
   userAgent,
   width
 ) {
-  return Promise.resolve(uuid.v4());
+  return this._storageService.storeImage(null);
 };
 
 
