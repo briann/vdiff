@@ -6,7 +6,6 @@ var path = require('path');
 var models = require('./server/models');
 var ScreenshotServiceApi = require('./screenshot_service/api');
 var ImageDiffServiceApi = require('./imagediff_service/api');
-var StorageServiceApi = require('./storage_service/api');
 
 function configure() {
   // In order of priority, first being most important.
@@ -60,10 +59,11 @@ function syncDbAnd(syncDoneCallback) {
 
 function start() {
   var staticDirectory = path.join(__dirname, 'client');
+  var diffImageDirectory = path.join(staticDirectory, 'diffimages');
+  var manetRestApi = nconf.get('manetRestApi');
 
-  var storageService = new StorageServiceApi();
-  var screenshotService = new ScreenshotServiceApi(storageService);
-  var imageDiffService = new ImageDiffServiceApi(storageService);
+  var screenshotService = new ScreenshotServiceApi(diffImageDirectory, manetRestApi);
+  var imageDiffService = new ImageDiffServiceApi(diffImageDirectory);
 
   var vdiffServer = new VdiffServer(
     nconf.get('port'),

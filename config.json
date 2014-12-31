@@ -1,4 +1,4 @@
 {
   "port": 3000,
-  "manetRestApi": "http://localhost:8891"
+  "manetRestApi": "http://localhost:8891/?"
 }

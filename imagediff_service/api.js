@@ -2,8 +2,8 @@ var Promise = require('bluebird');
 var uuid = require('node-uuid');
 
 
-var ImageDiffServiceApi = function(storageService) {
-  this._storageService = storageService;
+var ImageDiffServiceApi = function(imageDir) {
+  this._imageDir = imageDir;
 };
 
 
@@ -12,7 +12,8 @@ ImageDiffServiceApi.prototype.getDiffImage = function(
   fromImageId,
   toImageId
 ) {
-  return [this._storageService.storeImage(null), 50];
+  var uniqueId = uuid.v4();
+  return [uniqueId, 50];
 };
 
 

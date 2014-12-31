@@ -109,10 +109,14 @@ ExecutionsApi.prototype._submitExecutionToScreenshotService =
       this.diffPercentage = diffPercentage;
       return models.Diff.find(diffToCapture.diffToUpdate);
     }).then(function(diff) {
-      diff.fromImageId = this.fromScreenshotId;
-      diff.toImageId = this.toScreenshotId;
-      diff.compImageId = this.diffScreenshotId;
-      diff.compPercent = this.diffPercentage;
+      if (this.fromScreenshotId &&
+          this.toScreenshotId &&
+          this.diffScreenshotId) {
+        diff.fromImageId = this.fromScreenshotId;
+        diff.toImageId = this.toScreenshotId;
+        diff.compImageId = this.diffScreenshotId;
+        diff.compPercent = this.diffPercentage;
+      }
       return diff.save();
     });
   });
