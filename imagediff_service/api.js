@@ -40,7 +40,7 @@ ImageDiffServiceApi.prototype.getDiffImage = function(
   var fromCanvasImage = new Canvas.Image();
   fs.readFile(fromFilePath, function(error, data) {
     console.log(fromFilePath);
-    // fromCanvasImage.src = data;
+    fromCanvasImage.src = data;
   });
 
   return fs.readFileAsync(fromFilePath).bind({
